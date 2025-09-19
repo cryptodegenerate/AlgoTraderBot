@@ -6,6 +6,16 @@ import { insertTradeSchema, insertEquitySchema, insertBotStatusSchema, insertBot
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for Railway
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || "development"
+    });
+  });
+
   // Bot status endpoints
   app.get("/api/bot/status", async (req, res) => {
     try {
