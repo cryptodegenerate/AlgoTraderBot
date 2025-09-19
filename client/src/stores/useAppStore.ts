@@ -17,6 +17,7 @@ interface AppState {
   isSettingsModalOpen: boolean;
   selectedSymbol: string;
   selectedTimeframe: string;
+  currentView: string;
   
   // Stats
   tradeStats: TradeStats;
@@ -31,6 +32,7 @@ interface AppState {
   setIsSettingsModalOpen: (open: boolean) => void;
   setSelectedSymbol: (symbol: string) => void;
   setSelectedTimeframe: (timeframe: string) => void;
+  setCurrentView: (view: string) => void;
   updateTradeStats: () => void;
 }
 
@@ -45,6 +47,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isSettingsModalOpen: false,
   selectedSymbol: 'BTC/USDT',
   selectedTimeframe: '1m',
+  currentView: 'dashboard',
   tradeStats: {
     winRate: 0,
     avgHoldTime: '0m',
@@ -67,6 +70,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setIsSettingsModalOpen: (open) => set({ isSettingsModalOpen: open }),
   setSelectedSymbol: (symbol) => set({ selectedSymbol: symbol }),
   setSelectedTimeframe: (timeframe) => set({ selectedTimeframe: timeframe }),
+  setCurrentView: (view) => set({ currentView: view }),
   
   updateTradeStats: () => {
     const { trades } = get();

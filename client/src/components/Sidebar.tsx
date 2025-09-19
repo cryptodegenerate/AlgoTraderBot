@@ -10,27 +10,41 @@ const navigation = [
 ];
 
 export function Sidebar() {
-  const { botSettings, tradeStats } = useAppStore();
+  const { botSettings, tradeStats, currentView, setCurrentView, setIsSettingsModalOpen } = useAppStore();
   const symbols = botSettings?.symbols?.split(',') || ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'];
+
+  const handleNavClick = (viewName: string) => {
+    const viewId = viewName.toLowerCase().replace(' ', '-');
+    if (viewId === 'settings') {
+      setIsSettingsModalOpen(true);
+    } else {
+      setCurrentView(viewId);
+    }
+  };
 
   return (
     <aside className="w-64 bg-card border-r border-border p-4 overflow-y-auto">
       <nav className="space-y-2">
-        {navigation.map((item) => (
-          <a
-            key={item.name}
-            href={item.href}
-            className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
-              item.current
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-            }`}
-            data-testid={`nav-${item.name.toLowerCase().replace(' ', '-')}`}
-          >
-            <item.icon className="w-5 h-5" />
-            <span>{item.name}</span>
-          </a>
-        ))}
+        {navigation.map((item) => {
+          const viewId = item.name.toLowerCase().replace(' ', '-');
+          const isActive = viewId === currentView || (viewId === 'dashboard' && currentView === 'dashboard');
+          
+          return (
+            <button
+              key={item.name}
+              onClick={() => handleNavClick(item.name)}
+              className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
+                isActive
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+              }`}
+              data-testid={`nav-${item.name.toLowerCase().replace(' ', '-')}`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span>{item.name}</span>
+            </button>
+          );
+        })}
       </nav>
       
       <div className="mt-8">

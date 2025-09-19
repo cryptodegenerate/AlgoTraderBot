@@ -19,6 +19,7 @@ export default function Dashboard() {
     setPositions,
     setEquityHistory,
     setCurrentEquity,
+    currentView,
   } = useAppStore();
 
   const { isConnected } = useWebSocket();
@@ -82,6 +83,56 @@ export default function Dashboard() {
     if (latestEquity && 'equity' in latestEquity) setCurrentEquity(latestEquity.equity);
   }, [latestEquity, setCurrentEquity]);
 
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'dashboard':
+      default:
+        return (
+          <>
+            <PositionsGrid />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <PriceChart />
+              <RiskDashboard />
+            </div>
+            <TradeHistoryTable />
+          </>
+        );
+      
+      case 'trade-history':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Trade History</h1>
+            </div>
+            <TradeHistoryTable />
+          </div>
+        );
+      
+      case 'risk-management':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Risk Management</h1>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <RiskDashboard />
+              <PositionsGrid />
+            </div>
+          </div>
+        );
+      
+      case 'telegram':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Telegram Management</h1>
+            </div>
+            <TelegramPanel />
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="bg-background text-foreground font-sans min-h-screen">
       <Header />
@@ -90,15 +141,7 @@ export default function Dashboard() {
         <Sidebar />
         
         <main className="flex-1 p-6 overflow-auto">
-          <PositionsGrid />
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <PriceChart />
-            <RiskDashboard />
-          </div>
-          
-          <TradeHistoryTable />
-          <TelegramPanel />
+          {renderCurrentView()}
         </main>
       </div>
       
