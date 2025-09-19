@@ -38,6 +38,55 @@ export function SettingsModal() {
     adminToken: ""
   });
 
+  const getExchangePresets = (exchange: string) => {
+    const presets: Record<string, any> = {
+      bybit: {
+        riskPerTrade: 0.0075,
+        dailyMaxDD: 0.05,
+        hhvLen: 50,
+        atrLen: 14,
+        atrMultSL: 1.8,
+        atrMultTrail: 2.2,
+        volZMin: 2.0,
+        lookback: 200,
+        symbols: "BTC/USDT,ETH/USDT,SOL/USDT"
+      },
+      okx: {
+        riskPerTrade: 0.008,
+        dailyMaxDD: 0.045,
+        hhvLen: 45,
+        atrLen: 16,
+        atrMultSL: 1.7,
+        atrMultTrail: 2.3,
+        volZMin: 1.8,
+        lookback: 180,
+        symbols: "BTC/USDT,ETH/USDT,SOL/USDT"
+      },
+      kraken: {
+        riskPerTrade: 0.012,
+        dailyMaxDD: 0.04,
+        hhvLen: 40,
+        atrLen: 16,
+        atrMultSL: 1.6,
+        atrMultTrail: 2.1,
+        volZMin: 1.9,
+        lookback: 180,
+        symbols: "BTC/USD,ETH/USD,SOL/USD"
+      }
+    };
+    
+    return presets[exchange] || presets.bybit;
+  };
+
+  const handleExchangeChange = (exchange: string) => {
+    const presets = getExchangePresets(exchange);
+    setFormData(prev => ({
+      ...prev,
+      exchange,
+      ...presets
+    }));
+  };
+
   const handleSave = async () => {
     try {
       const response = await apiRequest('PUT', '/api/bot/settings', formData);
@@ -101,7 +150,7 @@ export function SettingsModal() {
               <Label htmlFor="exchange">Exchange</Label>
               <Select 
                 value={formData.exchange} 
-                onValueChange={(value) => setFormData({...formData, exchange: value})}
+                onValueChange={handleExchangeChange}
               >
                 <SelectTrigger data-testid="select-exchange">
                   <SelectValue />
@@ -109,6 +158,7 @@ export function SettingsModal() {
                 <SelectContent>
                   <SelectItem value="bybit">Bybit</SelectItem>
                   <SelectItem value="okx">OKX</SelectItem>
+                  <SelectItem value="kraken">Kraken</SelectItem>
                 </SelectContent>
               </Select>
             </div>

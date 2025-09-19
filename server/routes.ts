@@ -42,10 +42,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/bot/settings", async (req, res) => {
     try {
-      const settings = await storage.updateBotSettings(req.body);
+      // Validate request body with partial schema since some fields are optional
+      const validateData = insertBotSettingsSchema.deepPartial().parse(req.body);
+      const settings = await storage.updateBotSettings(validateData);
       res.json(settings);
     } catch (error) {
-      res.status(500).json({ error: "Failed to update bot settings" });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update bot settings" });
+      }
     }
   });
 

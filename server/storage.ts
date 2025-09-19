@@ -115,7 +115,15 @@ export class MemStorage implements IStorage {
 
   async createTrade(insertTrade: InsertTrade): Promise<Trade> {
     const id = randomUUID();
-    const trade: Trade = { ...insertTrade, id };
+    const trade: Trade = { 
+      ...insertTrade, 
+      id,
+      sl: insertTrade.sl ?? null,
+      trail: insertTrade.trail ?? null,
+      pnl: insertTrade.pnl ?? null,
+      exitPrice: insertTrade.exitPrice ?? null,
+      exitTime: insertTrade.exitTime ?? null
+    };
     this.trades.set(id, trade);
     return trade;
   }
@@ -153,9 +161,11 @@ export class MemStorage implements IStorage {
   }
 
   async updateBotStatus(status: InsertBotStatus): Promise<BotStatus> {
+    const id = this.botStatus?.id || randomUUID();
     this.botStatus = { 
-      id: this.botStatus?.id || randomUUID(), 
-      ...status 
+      ...this.botStatus,
+      ...status, 
+      id
     };
     return this.botStatus;
   }
@@ -164,11 +174,72 @@ export class MemStorage implements IStorage {
     return this.botSettings;
   }
 
-  async updateBotSettings(updateData: Partial<BotSettings>): Promise<BotSettings> {
-    this.botSettings = { 
-      ...this.botSettings!, 
-      ...updateData 
+  private getExchangePresets(exchange: string): Partial<BotSettings> {
+    const presets: Record<string, Partial<BotSettings>> = {
+      bybit: {
+        riskPerTrade: 0.0075,
+        dailyMaxDD: 0.05,
+        hhvLen: 50,
+        atrLen: 14,
+        atrMultSL: 1.8,
+        atrMultTrail: 2.2,
+        volZMin: 2.0,
+        lookback: 200,
+        symbols: "BTC/USDT,ETH/USDT,SOL/USDT"
+      },
+      okx: {
+        riskPerTrade: 0.008,
+        dailyMaxDD: 0.045,
+        hhvLen: 45,
+        atrLen: 16,
+        atrMultSL: 1.7,
+        atrMultTrail: 2.3,
+        volZMin: 1.8,
+        lookback: 180,
+        symbols: "BTC/USDT,ETH/USDT,SOL/USDT"
+      },
+      kraken: {
+        riskPerTrade: 0.012,
+        dailyMaxDD: 0.04,
+        hhvLen: 40,
+        atrLen: 16,
+        atrMultSL: 1.6,
+        atrMultTrail: 2.1,
+        volZMin: 1.9,
+        lookback: 180,
+        symbols: "BTC/USD,ETH/USD,SOL/USD"
+      }
     };
+    
+    return presets[exchange] || presets.bybit;
+  }
+
+  async updateBotSettings(updateData: Partial<BotSettings>): Promise<BotSettings> {
+    // If exchange is being changed, apply exchange-specific presets
+    if (updateData.exchange && updateData.exchange !== this.botSettings?.exchange) {
+      const exchangePresets = this.getExchangePresets(updateData.exchange);
+      this.botSettings = { 
+        ...this.botSettings!, 
+        ...exchangePresets,
+        ...updateData 
+      };
+      
+      // Also update bot status to reflect the new exchange
+      if (this.botStatus) {
+        this.botStatus = {
+          ...this.botStatus,
+          exchange: updateData.exchange,
+          symbols: exchangePresets.symbols || this.botStatus.symbols,
+          lastUpdate: Date.now()
+        };
+      }
+    } else {
+      this.botSettings = { 
+        ...this.botSettings!, 
+        ...updateData 
+      };
+    }
+    
     return this.botSettings;
   }
 
@@ -178,7 +249,16 @@ export class MemStorage implements IStorage {
 
   async createPosition(insertPosition: InsertPosition): Promise<Position> {
     const id = randomUUID();
-    const position: Position = { ...insertPosition, id };
+    const position: Position = { 
+      ...insertPosition, 
+      id,
+      sl: insertPosition.sl ?? null,
+      trail: insertPosition.trail ?? null,
+      currentPrice: insertPosition.currentPrice ?? null,
+      unrealizedPnl: insertPosition.unrealizedPnl ?? null,
+      duration: insertPosition.duration ?? null,
+      openTime: insertPosition.openTime ?? null
+    };
     this.positions.set(id, position);
     return position;
   }
