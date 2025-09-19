@@ -235,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }));
 
     // Simulate real-time updates
-    const interval = setInterval(() => {
+    const priceInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         // Send mock price updates
         ws.send(JSON.stringify({
@@ -249,14 +249,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }, 2000);
 
+    // Simulate bot status updates every 15 seconds
+    const statusInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'bot_status_update',
+          data: {
+            status: Math.random() > 0.7 ? 'paused' : 'running',
+            lastActivity: new Date().toLocaleString(),
+            uptime: Math.floor(Math.random() * 86400000), // Random uptime in ms
+            tradesToday: Math.floor(Math.random() * 10),
+          },
+          timestamp: Date.now()
+        }));
+      }
+    }, 15000);
+
+    // Simulate position updates every 20 seconds
+    const positionInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        const hasPosition = Math.random() > 0.6;
+        ws.send(JSON.stringify({
+          type: 'position_update',
+          data: hasPosition ? {
+            id: 'pos_' + Math.random().toString(36).substr(2, 9),
+            symbol: 'BTC/USDT',
+            side: Math.random() > 0.5 ? 'long' : 'short',
+            size: Math.random() * 0.1 + 0.01,
+            entryPrice: 43000 + (Math.random() - 0.5) * 500,
+            unrealizedPnl: (Math.random() - 0.5) * 200,
+            percentage: (Math.random() - 0.5) * 5
+          } : null,
+          timestamp: Date.now()
+        }));
+      }
+    }, 20000);
+
+    // Simulate trade updates occasionally  
+    const tradeInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN && Math.random() > 0.85) { // 15% chance
+        ws.send(JSON.stringify({
+          type: 'trade_update',
+          data: {
+            id: 'trade_' + Math.random().toString(36).substr(2, 9),
+            symbol: 'BTC/USDT',
+            side: Math.random() > 0.5 ? 'buy' : 'sell',
+            amount: Math.random() * 0.1 + 0.01,
+            price: 43000 + (Math.random() - 0.5) * 1000,
+            pnl: (Math.random() - 0.5) * 150,
+            timestamp: Date.now(),
+            status: 'completed'
+          },
+          timestamp: Date.now()
+        }));
+      }
+    }, 8000);
+
     ws.on('close', () => {
       console.log('Client disconnected from WebSocket');
-      clearInterval(interval);
+      clearInterval(priceInterval);
+      clearInterval(statusInterval);
+      clearInterval(positionInterval);
+      clearInterval(tradeInterval);
     });
 
     ws.on('error', (error) => {
       console.error('WebSocket error:', error);
-      clearInterval(interval);
+      clearInterval(priceInterval);
+      clearInterval(statusInterval);
+      clearInterval(positionInterval);
+      clearInterval(tradeInterval);
     });
   });
 

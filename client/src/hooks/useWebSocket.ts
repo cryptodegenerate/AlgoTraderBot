@@ -36,13 +36,13 @@ export function useWebSocket() {
               handlePriceUpdate(message.data as PriceUpdate);
               break;
             case 'trade_update':
-              // Handle trade updates
+              handleTradeUpdate(message.data);
               break;
             case 'position_update':
-              // Handle position updates
+              handlePositionUpdate(message.data);
               break;
             case 'bot_status_update':
-              // Handle bot status updates
+              handleBotStatusUpdate(message.data);
               break;
           }
         } catch (error) {
@@ -94,6 +94,22 @@ export function useWebSocket() {
   const handlePriceUpdate = (priceUpdate: PriceUpdate) => {
     // Update current prices in the store or trigger re-fetch
     console.log('Price update received:', priceUpdate);
+  };
+
+  const handleTradeUpdate = (trade: any) => {
+    console.log('Trade update received:', trade);
+    // In a real app, this would update the trades list in the store
+    // and trigger notifications or UI updates
+  };
+
+  const handlePositionUpdate = (position: any) => {
+    console.log('Position update received:', position);
+    // Update current positions in the store
+  };
+
+  const handleBotStatusUpdate = (status: any) => {
+    console.log('Bot status update received:', status);
+    // Update bot status in the store
   };
 
   useEffect(() => {
