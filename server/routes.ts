@@ -219,19 +219,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Message is required" });
       }
       
-      // In a real implementation, this would send to Telegram
-      // For now, just return success
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID;
+      
+      if (!botToken || !chatId) {
+        return res.status(400).json({ error: "Telegram bot token or chat ID not configured" });
+      }
+      
+      const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      const telegramResponse = await fetch(telegramUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'HTML'
+        })
+      });
+      
+      if (!telegramResponse.ok) {
+        const errorData = await telegramResponse.json();
+        console.error('Telegram API error:', errorData);
+        return res.status(500).json({ error: "Failed to send telegram message", details: errorData });
+      }
+      
       res.json({ success: true, message: "Alert sent successfully" });
     } catch (error) {
+      console.error('Telegram send error:', error);
       res.status(500).json({ error: "Failed to send telegram alert" });
     }
   });
 
   app.post("/api/telegram/test", async (req, res) => {
     try {
-      // In a real implementation, this would test the Telegram connection
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID;
+      
+      if (!botToken || !chatId) {
+        return res.status(400).json({ error: "Telegram bot token or chat ID not configured" });
+      }
+      
+      const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      const testMessage = "🤖 Goose Alpha Bot Test\n\nTelegram connection is working! Your bot is ready to send trading alerts.";
+      
+      const telegramResponse = await fetch(telegramUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: testMessage,
+          parse_mode: 'HTML'
+        })
+      });
+      
+      if (!telegramResponse.ok) {
+        const errorData = await telegramResponse.json();
+        console.error('Telegram API error:', errorData);
+        return res.status(500).json({ error: "Telegram connection test failed", details: errorData });
+      }
+      
       res.json({ success: true, message: "Telegram connection test successful" });
     } catch (error) {
+      console.error('Telegram test error:', error);
       res.status(500).json({ error: "Telegram connection test failed" });
     }
   });
