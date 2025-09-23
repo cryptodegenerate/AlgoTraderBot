@@ -88,7 +88,7 @@ export class MemStorage implements IStorage {
     const initialEquity: Equity = {
       id: randomUUID(),
       ts: Date.now(),
-      equity: 10000.0,
+      equity: 1000.0,
     };
     this.equityHistory.set(initialEquity.id, initialEquity);
   }
