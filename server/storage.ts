@@ -57,8 +57,8 @@ export class MemStorage implements IStorage {
       id: randomUUID(),
       isRunning: false,
       lastUpdate: Date.now(),
-      exchange: "bybit",
-      symbols: "BTC/USDT,ETH/USDT,SOL/USDT",
+      exchange: "binance",
+      symbols: "BTC/USDT,ETH/USDT,SOL/USDT,ASTER/USDT,PEPE/USDT,DOGE/USDT,SHIB/USDT,WIF/USDT",
       timeframe: "1m",
       dryRun: true,
     };
@@ -66,18 +66,18 @@ export class MemStorage implements IStorage {
     // Initialize default bot settings
     this.botSettings = {
       id: randomUUID(),
-      exchange: "bybit",
-      symbols: "BTC/USDT,ETH/USDT,SOL/USDT",
+      exchange: "binance",
+      symbols: "BTC/USDT,ETH/USDT,SOL/USDT,ASTER/USDT,PEPE/USDT,DOGE/USDT,SHIB/USDT,WIF/USDT",
       timeframe: "1m",
-      riskPerTrade: 0.0075,
-      dailyMaxDD: 0.05,
+      riskPerTrade: 0.015,
+      dailyMaxDD: 0.03,
       maxConcurrentPos: 2,
-      hhvLen: 50,
-      atrLen: 14,
-      atrMultSL: 1.8,
-      atrMultTrail: 2.2,
-      volZMin: 2.0,
-      lookback: 200,
+      hhvLen: 35,
+      atrLen: 12,
+      atrMultSL: 1.5,
+      atrMultTrail: 2.0,
+      volZMin: 1.5,
+      lookback: 150,
       dryRun: true,
       telegramBotToken: null,
       telegramChatId: null,
@@ -176,39 +176,6 @@ export class MemStorage implements IStorage {
 
   private getExchangePresets(exchange: string): Partial<BotSettings> {
     const presets: Record<string, Partial<BotSettings>> = {
-      bybit: {
-        riskPerTrade: 0.0075,
-        dailyMaxDD: 0.05,
-        hhvLen: 50,
-        atrLen: 14,
-        atrMultSL: 1.8,
-        atrMultTrail: 2.2,
-        volZMin: 2.0,
-        lookback: 200,
-        symbols: "BTC/USDT,ETH/USDT,SOL/USDT"
-      },
-      okx: {
-        riskPerTrade: 0.008,
-        dailyMaxDD: 0.045,
-        hhvLen: 45,
-        atrLen: 16,
-        atrMultSL: 1.7,
-        atrMultTrail: 2.3,
-        volZMin: 1.8,
-        lookback: 180,
-        symbols: "BTC/USDT,ETH/USDT,SOL/USDT"
-      },
-      kraken: {
-        riskPerTrade: 0.012,
-        dailyMaxDD: 0.04,
-        hhvLen: 40,
-        atrLen: 16,
-        atrMultSL: 1.6,
-        atrMultTrail: 2.1,
-        volZMin: 1.9,
-        lookback: 180,
-        symbols: "BTC/USD,ETH/USD,SOL/USD"
-      },
       binance: {
         riskPerTrade: 0.015,
         dailyMaxDD: 0.03,
@@ -222,7 +189,7 @@ export class MemStorage implements IStorage {
       }
     };
     
-    return presets[exchange] || presets.bybit;
+    return presets[exchange] || presets.binance;
   }
 
   async updateBotSettings(updateData: Partial<BotSettings>): Promise<BotSettings> {
