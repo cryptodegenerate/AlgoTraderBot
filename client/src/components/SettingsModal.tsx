@@ -72,6 +72,17 @@ export function SettingsModal() {
         volZMin: 1.9,
         lookback: 180,
         symbols: "BTC/USD,ETH/USD,SOL/USD"
+      },
+      binance: {
+        riskPerTrade: 0.015,
+        dailyMaxDD: 0.03,
+        hhvLen: 35,
+        atrLen: 12,
+        atrMultSL: 1.5,
+        atrMultTrail: 2.0,
+        volZMin: 1.5,
+        lookback: 150,
+        symbols: "BTC/USDT,ETH/USDT,SOL/USDT,ASTER/USDT,PEPE/USDT,DOGE/USDT,SHIB/USDT,WIF/USDT"
       }
     };
     
@@ -159,6 +170,7 @@ export function SettingsModal() {
                   <SelectItem value="bybit">Bybit</SelectItem>
                   <SelectItem value="okx">OKX</SelectItem>
                   <SelectItem value="kraken">Kraken</SelectItem>
+                  <SelectItem value="binance">Binance</SelectItem>
                 </SelectContent>
               </Select>
             </div>
