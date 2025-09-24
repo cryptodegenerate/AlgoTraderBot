@@ -49,7 +49,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  log(`🌟 Initializing Goose Alpha Trading Bot...`);
+  
+  try {
+    const server = await registerRoutes(app);
+    log(`✅ Routes registered successfully`);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -75,8 +79,11 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || '5000', 10);
   
   // Railway debugging
-  log(`Starting server on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
-  log(`Environment variables: PORT=${process.env.PORT}, NODE_ENV=${process.env.NODE_ENV}`);
+  log(`🚀 Starting Goose Alpha Bot on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
+  log(`🔧 Environment variables: PORT=${process.env.PORT}, NODE_ENV=${process.env.NODE_ENV}`);
+  log(`📁 Working directory: ${process.cwd()}`);
+  log(`🏠 Platform: ${process.platform}, Arch: ${process.arch}`);
+  log(`📦 Node version: ${process.version}`);
   
   server.listen({
     port,
@@ -86,6 +93,12 @@ app.use((req, res, next) => {
     log(`✅ Server successfully started on port ${port}`);
     log(`🔗 Health check available at: http://0.0.0.0:${port}/api/health`);
   });
+  
+  } catch (error) {
+    log(`❌ Failed to start server: ${error.message}`);
+    console.error('Detailed error:', error);
+    process.exit(1);
+  }
 
   // Graceful shutdown for Railway
   process.on("SIGTERM", () => {

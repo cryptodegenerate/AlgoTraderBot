@@ -27,6 +27,8 @@ const requireAdminAuth = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  console.log(`🔗 Registering API routes...`);
+  
   // Health check endpoint for Railway
   app.get("/api/health", (req, res) => {
     const healthData = {
@@ -317,10 +319,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  console.log(`🌐 Creating HTTP server...`);
   const httpServer = createServer(app);
 
   // WebSocket server for real-time updates - temporarily disabled for Railway debugging
   // const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  console.log(`✅ Server setup complete, returning HTTP server`);
 
   /* Temporarily disabled for Railway debugging
   wss.on('connection', (ws: WebSocket) => {
