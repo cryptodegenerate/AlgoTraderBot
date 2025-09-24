@@ -69,7 +69,19 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // Temporary simplified static serving for Railway
+    log(`📁 Setting up production static file serving...`);
+    try {
+      // Simplified static serving without problematic path resolution
+      app.use(express.static("dist/public"));
+      app.get("*", (_req, res) => {
+        res.sendFile("index.html", { root: "dist/public" });
+      });
+      log(`✅ Static file serving configured`);
+    } catch (staticError: any) {
+      log(`⚠️ Static serving issue: ${staticError?.message || 'Unknown'}, continuing without static files`);
+      // Continue without static files - API will still work
+    }
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
@@ -93,27 +105,27 @@ app.use((req, res, next) => {
     log(`✅ Server successfully started on port ${port}`);
     log(`🔗 Health check available at: http://0.0.0.0:${port}/api/health`);
   });
-  
-  } catch (error) {
-    log(`❌ Failed to start server: ${error.message}`);
+    
+    // Graceful shutdown for Railway
+    process.on("SIGTERM", () => {
+      log("SIGTERM received, shutting down gracefully");
+      server.close(() => {
+        log("Process terminated");
+        process.exit(0);
+      });
+    });
+
+    process.on("SIGINT", () => {
+      log("SIGINT received, shutting down gracefully");
+      server.close(() => {
+        log("Process terminated");
+        process.exit(0);
+      });
+    });
+    
+  } catch (error: any) {
+    log(`❌ Failed to start server: ${error?.message || 'Unknown error'}`);
     console.error('Detailed error:', error);
     process.exit(1);
   }
-
-  // Graceful shutdown for Railway
-  process.on("SIGTERM", () => {
-    log("SIGTERM received, shutting down gracefully");
-    server.close(() => {
-      log("Process terminated");
-      process.exit(0);
-    });
-  });
-
-  process.on("SIGINT", () => {
-    log("SIGINT received, shutting down gracefully");
-    server.close(() => {
-      log("Process terminated");
-      process.exit(0);
-    });
-  });
 })();
