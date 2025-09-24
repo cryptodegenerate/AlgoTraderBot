@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { tradingEngine } from "./trading-engine";
 import { insertTradeSchema, insertEquitySchema, insertBotStatusSchema, insertBotSettingsSchema, insertPositionSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -101,42 +102,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bot control endpoints
   app.post("/api/bot/start", optionalAdminAuth, async (req, res) => {
     try {
-      const status = await storage.updateBotStatus({
-        isRunning: true,
-        lastUpdate: Date.now(),
-      });
-      res.json({ success: true, status });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to start bot" });
+      console.log("🚀 Starting live trading engine via API...");
+      await tradingEngine.start();
+      res.json({ success: true, message: "Live trading bot started with real Binance data" });
+    } catch (error: any) {
+      console.error("❌ Failed to start trading bot:", error);
+      res.status(500).json({ error: error?.message || "Failed to start trading bot" });
     }
   });
 
   app.post("/api/bot/pause", optionalAdminAuth, async (req, res) => {
     try {
-      const status = await storage.updateBotStatus({
-        isRunning: false,
-        lastUpdate: Date.now(),
-      });
-      res.json({ success: true, status });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to pause bot" });
+      console.log("⏸️ Pausing trading engine via API...");
+      await tradingEngine.stop();
+      res.json({ success: true, message: "Trading bot paused - all positions monitored" });
+    } catch (error: any) {
+      console.error("❌ Failed to pause trading bot:", error);
+      res.status(500).json({ error: error?.message || "Failed to pause trading bot" });
     }
   });
 
   app.post("/api/bot/kill", optionalAdminAuth, async (req, res) => {
     try {
-      const status = await storage.updateBotStatus({
-        isRunning: false,
-        lastUpdate: Date.now(),
-      });
-      // Clear all positions
-      const positions = await storage.getPositions();
-      for (const position of positions) {
-        await storage.deletePosition(position.id);
-      }
-      res.json({ success: true, status });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to kill bot" });
+      console.log("🛑 Killing trading engine via API...");
+      await tradingEngine.stop();
+      res.json({ success: true, message: "Trading bot stopped completely" });
+    } catch (error: any) {
+      console.error("❌ Failed to stop trading bot:", error);
+      res.status(500).json({ error: error?.message || "Failed to stop trading bot" });
     }
   });
 
