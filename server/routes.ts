@@ -319,9 +319,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
-  // WebSocket server for real-time updates
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // WebSocket server for real-time updates - temporarily disabled for Railway debugging
+  // const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
+  /* Temporarily disabled for Railway debugging
   wss.on('connection', (ws: WebSocket) => {
     console.log('Client connected to WebSocket');
 
@@ -418,6 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       clearInterval(tradeInterval);
     });
   });
+  */ // End temporary WebSocket disable
 
   return httpServer;
 }
