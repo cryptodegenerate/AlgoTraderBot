@@ -68,19 +68,19 @@
 Set these in Railway's environment variables:
 
 ```env
-# Required
+# Required for Production
 NODE_ENV=production
 DATABASE_URL=postgresql://... (auto-injected by Railway)
 SESSION_SECRET=your-random-64-char-string
+ADMIN_TOKEN=your-secure-admin-token (required for bot control)
 
-# Exchange APIs (at least one required)
-BYBIT_API_KEY=your-bybit-key
-BYBIT_API_SECRET=your-bybit-secret
+# Exchange APIs (at least one required) - Using Binance
+BINANCE_API_KEY=your-binance-key
+BINANCE_API_SECRET=your-binance-secret
 
 # Optional but recommended
 TELEGRAM_BOT_TOKEN=your-telegram-bot-token
 TELEGRAM_CHAT_ID=your-telegram-chat-id
-ADMIN_TOKEN=your-admin-token
 ```
 
 ## Deployment Steps

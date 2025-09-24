@@ -58,7 +58,7 @@ export class MemStorage implements IStorage {
       isRunning: false,
       lastUpdate: Date.now(),
       exchange: "binance",
-      symbols: "BTC/USDT,ETH/USDT,SOL/USDT,ASTER/USDT,PEPE/USDT,DOGE/USDT,SHIB/USDT,WIF/USDT",
+      symbols: "BTC/USDT,ETH/USDT,SOL/USDT,ASTR/USDT,PEPE/USDT,DOGE/USDT,SHIB/USDT,WIF/USDT",
       timeframe: "1m",
       dryRun: true,
     };
@@ -67,7 +67,7 @@ export class MemStorage implements IStorage {
     this.botSettings = {
       id: randomUUID(),
       exchange: "binance",
-      symbols: "BTC/USDT,ETH/USDT,SOL/USDT,ASTER/USDT,PEPE/USDT,DOGE/USDT,SHIB/USDT,WIF/USDT",
+      symbols: "BTC/USDT,ETH/USDT,SOL/USDT,ASTR/USDT,PEPE/USDT,DOGE/USDT,SHIB/USDT,WIF/USDT",
       timeframe: "1m",
       riskPerTrade: 0.015,
       dailyMaxDD: 0.03,
