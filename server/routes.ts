@@ -5,15 +5,18 @@ import { storage } from "./storage";
 import { insertTradeSchema, insertEquitySchema, insertBotStatusSchema, insertBotSettingsSchema, insertPositionSchema } from "@shared/schema";
 import { z } from "zod";
 
-// Authentication middleware for protected endpoints
-const requireAdminAuth = (req: any, res: any, next: any) => {
+// Optional authentication middleware for protected endpoints
+const optionalAdminAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
   const adminToken = process.env.ADMIN_TOKEN;
   
+  // If no admin token is configured, allow access (development mode)
   if (!adminToken) {
-    return res.status(500).json({ error: "Admin token not configured" });
+    console.log("⚠️ No ADMIN_TOKEN configured - allowing unrestricted access");
+    return next();
   }
   
+  // If admin token is configured but no auth header provided, deny access
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: "Missing or invalid authorization header" });
   }
@@ -56,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/bot/status", requireAdminAuth, async (req, res) => {
+  app.post("/api/bot/status", optionalAdminAuth, async (req, res) => {
     try {
       const data = insertBotStatusSchema.parse(req.body);
       const status = await storage.updateBotStatus(data);
@@ -80,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/bot/settings", requireAdminAuth, async (req, res) => {
+  app.put("/api/bot/settings", optionalAdminAuth, async (req, res) => {
     try {
       // Validate request body with partial schema since some fields are optional
       const validateData = insertBotSettingsSchema.deepPartial().parse(req.body);
@@ -96,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bot control endpoints
-  app.post("/api/bot/start", requireAdminAuth, async (req, res) => {
+  app.post("/api/bot/start", optionalAdminAuth, async (req, res) => {
     try {
       const status = await storage.updateBotStatus({
         isRunning: true,
@@ -108,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/bot/pause", requireAdminAuth, async (req, res) => {
+  app.post("/api/bot/pause", optionalAdminAuth, async (req, res) => {
     try {
       const status = await storage.updateBotStatus({
         isRunning: false,
@@ -120,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/bot/kill", requireAdminAuth, async (req, res) => {
+  app.post("/api/bot/kill", optionalAdminAuth, async (req, res) => {
     try {
       const status = await storage.updateBotStatus({
         isRunning: false,
@@ -242,7 +245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Telegram endpoints
-  app.post("/api/telegram/send", requireAdminAuth, async (req, res) => {
+  app.post("/api/telegram/send", optionalAdminAuth, async (req, res) => {
     try {
       const { message } = req.body;
       if (!message) {
@@ -282,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/telegram/test", requireAdminAuth, async (req, res) => {
+  app.post("/api/telegram/test", optionalAdminAuth, async (req, res) => {
     try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
       const chatId = process.env.TELEGRAM_CHAT_ID;
