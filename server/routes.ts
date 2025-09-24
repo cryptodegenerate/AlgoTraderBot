@@ -29,12 +29,19 @@ const requireAdminAuth = (req: any, res: any, next: any) => {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint for Railway
   app.get("/api/health", (req, res) => {
-    res.status(200).json({ 
+    const healthData = {
       status: "ok", 
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      environment: process.env.NODE_ENV || "development"
-    });
+      environment: process.env.NODE_ENV || "development",
+      port: process.env.PORT || "5000",
+      pid: process.pid,
+      memory: process.memoryUsage(),
+      platform: process.platform
+    };
+    
+    console.log("🏥 Health check requested:", healthData);
+    res.status(200).json(healthData);
   });
 
   // Bot status endpoints

@@ -1,0 +1,170 @@
+You reached the start of the range
+Sep 24, 2025, 9:26 PM
+ 
+[Region: ]
+==============
+Using Nixpacks
+==============
+
+context: f4t1-1f9K
+╔═════════════════════ Nixpacks v1.38.0 ═════════════════════╗
+║ setup      │ nodejs-18_x                                   ║
+║────────────────────────────────────────────────────────────║
+║ caddy      │ pkgs: caddy                                   ║
+║            │ cmds: caddy fmt --overwrite /assets/Caddyfile ║
+║────────────────────────────────────────────────────────────║
+║ install    │ npm install --no-audit --no-fund              ║
+║────────────────────────────────────────────────────────────║
+║ build      │ npm run build                                 ║
+║────────────────────────────────────────────────────────────║
+║ start      │ npm start                                     ║
+╚════════════════════════════════════════════════════════════╝
+
+internal
+booting buildkit
+2s
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+870ms
+
+internal
+load .dockerignore
+0ms
+
+stage-0
+FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+10ms
+
+internal
+load build context
+0ms
+
+stage-0
+WORKDIR /app/ cached
+185ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix
+16ms
+ 
+[Region: europe-west4]
+==============
+Using Nixpacks
+==============
+
+context: 92zc-O2NO
+╔═════════════════════ Nixpacks v1.38.0 ═════════════════════╗
+║ setup      │ nodejs-18_x                                   ║
+║────────────────────────────────────────────────────────────║
+║ caddy      │ pkgs: caddy                                   ║
+║            │ cmds: caddy fmt --overwrite /assets/Caddyfile ║
+║────────────────────────────────────────────────────────────║
+║ install    │ npm install --no-audit --no-fund              ║
+║────────────────────────────────────────────────────────────║
+║ build      │ npm run build                                 ║
+║────────────────────────────────────────────────────────────║
+║ start      │ npm start                                     ║
+╚════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load .dockerignore
+0ms
+
+internal
+load build context
+0ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+653ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+41s
+29 store paths deleted, 248.00 MiB freed
+
+stage-0
+COPY .nixpacks/assets /assets/
+74ms
+
+stage-0
+COPY . /app/.
+34ms
+
+stage-0
+RUN  caddy fmt --overwrite /assets/Caddyfile
+236ms
+
+stage-0
+COPY . /app/.
+182ms
+
+stage-0
+RUN npm install --no-audit --no-fund
+10s
+added 621 packages in 10s
+
+stage-0
+COPY . /app/.
+182ms
+
+stage-0
+RUN npm run build
+7s
+⚡ Done in 6ms
+
+stage-0
+RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+139ms
+
+stage-0
+COPY . /app
+71ms
+
+importing to docker
+14s
+
+auth
+sharing credentials for production-europe-west4-drams3a.railway-registry.com
+0ms
+=== Successfully Built! ===
+Run:
+docker run -it production-europe-west4-drams3a.railway-registry.com/76d4ca4f-fde2-4b3c-8777-934c613dedb1:bdbe1b08-52f4-4c99-ba38-1effb1757a8c
+Build time: 103.88 seconds
+ 
+====================
+Starting Healthcheck
+====================
+Path: /api/health
+Retry window: 5m0s
+ 
+Attempt #1 failed with service unavailable. Continuing to retry for 4m59s
+Attempt #2 failed with service unavailable. Continuing to retry for 4m55s
+Attempt #3 failed with service unavailable. Continuing to retry for 4m49s
+Attempt #4 failed with service unavailable. Continuing to retry for 4m35s
+Attempt #5 failed with service unavailable. Continuing to retry for 4m26s
+Attempt #6 failed with service unavailable. Continuing to retry for 4m10s
+Attempt #7 failed with service unavailable. Continuing to retry for 3m40s
+Attempt #8 failed with service unavailable. Continuing to retry for 3m10s
+Attempt #9 failed with service unavailable. Continuing to retry for 2m40s
+Attempt #10 failed with service unavailable. Continuing to retry for 2m10s
+Attempt #11 failed with service unavailable. Continuing to retry for 1m40s
+Attempt #12 failed with service unavailable. Continuing to retry for 1m9s
+Attempt #13 failed with service unavailable. Continuing to retry for 39s

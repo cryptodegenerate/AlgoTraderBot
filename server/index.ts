@@ -73,12 +73,18 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  
+  // Railway debugging
+  log(`Starting server on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
+  log(`Environment variables: PORT=${process.env.PORT}, NODE_ENV=${process.env.NODE_ENV}`);
+  
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`✅ Server successfully started on port ${port}`);
+    log(`🔗 Health check available at: http://0.0.0.0:${port}/api/health`);
   });
 
   // Graceful shutdown for Railway
