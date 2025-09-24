@@ -1,0 +1,111 @@
+You reached the start of the range
+Sep 24, 2025, 10:07 PM
+ 
+[Region: europe-west4]
+==============
+Using Nixpacks
+==============
+
+context: 92zc-O2NO
+╔══════════════════════════════ Nixpacks v1.38.0 ══════════════════════════════╗
+║ setup      │ nodejs-18_x                                                     ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ caddy      │ pkgs: caddy                                                     ║
+║            │ cmds: caddy fmt --overwrite /assets/Caddyfile                   ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ install    │ npm install --no-audit --no-fund                                ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ build      │ vite build && esbuild server/production.ts --platform=node      ║
+║            │ --packages=external --bundle --format=esm --outdir=dist         ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ start      │ NODE_ENV=production node dist/production.js                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+428ms
+
+internal
+load .dockerignore
+0ms
+
+internal
+load build context
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix cached
+0ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix cached
+0ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+COPY .nixpacks/assets /assets/ cached
+0ms
+
+stage-0
+COPY . /app/.
+560ms
+
+stage-0
+RUN  caddy fmt --overwrite /assets/Caddyfile
+237ms
+
+stage-0
+COPY . /app/.
+30ms
+
+stage-0
+RUN npm install --no-audit --no-fund
+7s
+added 621 packages in 7s
+
+stage-0
+COPY . /app/.
+155ms
+
+stage-0
+RUN vite build && esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+7s
+⚡ Done in 4ms
+
+stage-0
+RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+273ms
+
+stage-0
+COPY . /app
+441ms
+
+importing to docker
+10s
+
+auth
+sharing credentials for production-europe-west4-drams3a.railway-registry.com
+0ms
+=== Successfully Built! ===
+Run:
+docker run -it production-europe-west4-drams3a.railway-registry.com/76d4ca4f-fde2-4b3c-8777-934c613dedb1:96fa4573-0889-487c-8087-79104fc8f485
+Build time: 54.83 seconds
+ 
+====================
+Starting Healthcheck
+====================
+Path: /api/health
+Retry window: 2m0s
+ 
+[1/1] Healthcheck succeeded!
