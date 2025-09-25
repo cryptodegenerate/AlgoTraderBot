@@ -136,7 +136,7 @@ export class TradingEngine {
       if (ohlcvData.length < 50) return;
 
       // Calculate indicators
-      const signal = this.calculateBreakoutSignal(ohlcvData);
+      const signal = await this.calculateBreakoutSignal(ohlcvData);
       const currentPrice = ohlcvData[ohlcvData.length - 1].close;
       const currentPosition = this.positions.get(symbol);
 
@@ -180,11 +180,11 @@ export class TradingEngine {
     }
   }
 
-  private calculateBreakoutSignal(ohlcvData: OHLCV[]) {
+  private async calculateBreakoutSignal(ohlcvData: OHLCV[]) {
     const settings = this.settings!;
     const hhvLen = settings.hhvLen || 35;
     const atrLen = settings.atrLen || 12;
-    const volZMin = settings.volZMin || 1.5;
+    const volZMin = settings.volZMin || 2.0; // Increased from 1.5 to 2.0 for better quality signals
     const lookback = Math.min(settings.lookback || 150, 60);
 
     if (ohlcvData.length < Math.max(hhvLen, atrLen, lookback)) {
@@ -203,17 +203,23 @@ export class TradingEngine {
     // Calculate volume Z-score
     const volumeZ = this.calculateVolumeZScore(ohlcvData.slice(-lookback), lookback);
     
-    // Breakout condition: close > recent high AND volume spike
-    const shouldEnter = current.close > hhv && volumeZ > volZMin;
+    // BTC health filter: only trade longs when BTC is healthy
+    const btcHealthy = await this.checkBTCHealth();
     
-    // Calculate stop loss
-    const atrMultSL = settings.atrMultSL || 1.5;
-    const stopLoss = current.close - (atrMultSL * atr);
+    // Breakout condition: close > recent high AND volume spike AND BTC healthy
+    const shouldEnter = current.close > hhv && volumeZ > volZMin && btcHealthy;
+    
+    // Calculate stop loss (OPTIMIZED: wider stops for crypto volatility)
+    const atrMultSL = settings.atrMultSL || 2.5; // Increased from 1.5 to 2.5
+    const minDist = current.close * 0.0125; // Minimum 1.25% distance from price
+    const atrDistance = atrMultSL * atr;
+    const stopDistance = Math.max(atrDistance, minDist); // Use larger of ATR or minimum %
+    const stopLoss = current.close - stopDistance;
     
     return {
       shouldEnter,
       atr,
-      stopLoss: Math.max(stopLoss, current.close * 0.995), // Minimum 0.5% stop
+      stopLoss,
       volumeZ,
       hhv
     };
@@ -255,13 +261,56 @@ export class TradingEngine {
     return std > 0 ? (currentVolume - mean) / std : 0;
   }
 
+  private async checkBTCHealth(): Promise<boolean> {
+    try {
+      // Get BTC 15m data for trend health check
+      const btcData = await this.fetchOHLCV('BTC/USDT', 50);
+      if (btcData.length < 20) return true; // Default to healthy if insufficient data
+      
+      const current = btcData[btcData.length - 1];
+      const ema20 = this.calculateEMA(btcData.slice(-20), 20);
+      
+      // BTC healthy if current price > 20 EMA (uptrend)
+      return current.close > ema20;
+    } catch (error) {
+      console.error('❌ BTC health check failed:', error);
+      return true; // Default to healthy on error to avoid blocking all trades
+    }
+  }
+
+  private calculateEMA(ohlcvData: OHLCV[], period: number): number {
+    if (ohlcvData.length < period) return 0;
+    
+    const multiplier = 2 / (period + 1);
+    let ema = ohlcvData[0].close;
+    
+    for (let i = 1; i < ohlcvData.length; i++) {
+      ema = (ohlcvData[i].close * multiplier) + (ema * (1 - multiplier));
+    }
+    
+    return ema;
+  }
+
   private async enterPosition(symbol: string, signal: any, price: number): Promise<void> {
     if (!this.settings) return;
 
     try {
       const stopDistance = price - signal.stopLoss;
-      const riskAmount = this.equity * (this.settings.riskPerTrade || 0.015);
+      
+      // Guard against invalid stop distance
+      if (stopDistance <= 0) {
+        console.log(`⚠️ Invalid stop distance for ${symbol}: ${stopDistance}`);
+        return;
+      }
+      
+      const riskAmount = this.equity * (this.settings.riskPerTrade || 0.01); // Reduced from 1.5% to 1.0%
       const qty = riskAmount / stopDistance;
+      
+      // Guard against excessive position size
+      if (qty <= 0 || !isFinite(qty)) {
+        console.log(`⚠️ Invalid quantity for ${symbol}: ${qty}`);
+        return;
+      }
 
       // Create position record using schema fields
       const positionData: InsertPosition = {
@@ -300,7 +349,7 @@ export class TradingEngine {
       console.log(`🟢 ENTERED LONG ${symbol} @ $${price.toFixed(4)} | Stop: $${signal.stopLoss.toFixed(4)} | Vol Z-Score: ${signal.volumeZ.toFixed(2)} | HHV: $${signal.hhv.toFixed(4)}`);
       
       // Send Telegram notification if configured
-      await this.sendTelegramAlert(`🟢 LONG ${symbol}\nEntry: $${price.toFixed(4)}\nStop Loss: $${signal.stopLoss.toFixed(4)}\nVolume Breakout: ${signal.volumeZ.toFixed(2)}x\nRisk: ${((this.settings.riskPerTrade || 0.015) * 100).toFixed(1)}%`);
+      await this.sendTelegramAlert(`🟢 LONG ${symbol}\nEntry: $${price.toFixed(4)}\nStop Loss: $${signal.stopLoss.toFixed(4)}\nVolume Breakout: ${signal.volumeZ.toFixed(2)}x\nRisk: ${((this.settings.riskPerTrade || 0.01) * 100).toFixed(1)}%`);
 
     } catch (error) {
       console.error(`❌ Failed to enter position for ${symbol}:`, error);
@@ -378,7 +427,17 @@ export class TradingEngine {
   private async updateTrailingStop(position: Position, currentPrice: number, atr: number): Promise<void> {
     if (!this.settings) return;
 
-    const atrMultTrail = this.settings.atrMultTrail || 2.0;
+    // OPTIMIZED: Only start trailing after 1R profit (delayed trailing)
+    const profitPerShare = currentPrice - position.entry;
+    const initialRisk = position.entry - position.sl!;
+    const profitMultiple = profitPerShare / initialRisk;
+    
+    // Don't trail until we have at least 1R profit
+    if (profitMultiple < 1.0) {
+      return;
+    }
+
+    const atrMultTrail = this.settings.atrMultTrail || 3.0; // Increased from 2.0 to 3.0 (wider trailing)
     const newStopLoss = currentPrice - (atrMultTrail * atr);
     
     // Only update if new stop is higher (trailing up) and we have a current stop
