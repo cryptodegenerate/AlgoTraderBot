@@ -390,7 +390,7 @@ export class TradingEngine {
         unrealizedPnl: (currentPrice - position.entry) * position.qty
       };
       
-      await storage.updatePosition(updatedPosition);
+      await storage.updatePosition(position.id, updatedPosition);
       this.positions.set(position.symbol, updatedPosition);
     }
   }

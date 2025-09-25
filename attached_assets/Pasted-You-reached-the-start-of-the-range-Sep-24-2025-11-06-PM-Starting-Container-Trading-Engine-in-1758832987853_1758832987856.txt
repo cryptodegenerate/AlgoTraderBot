@@ -1,0 +1,63 @@
+You reached the start of the range
+Sep 24, 2025, 11:06 PM
+Starting Container
+🚀 Trading Engine initialized with Binance testnet (sandbox mode)
+10:07:15 PM [express] 🌟 Initializing Goose Alpha Trading Bot...
+10:07:15 PM [express] 🔗 Registering API routes...
+🔗 Registering API routes...
+🌐 Creating HTTP server...
+✅ Server setup complete, returning HTTP server
+10:07:15 PM [express] ✅ Routes registered successfully
+10:07:15 PM [express] 📁 Setting up production static file serving...
+10:07:15 PM [express] ✅ Static files served from: /app/dist/public
+10:07:15 PM [express] 🚀 Starting Goose Alpha Bot...
+10:07:15 PM [express] 🔧 Environment: PORT=8080, NODE_ENV=production
+10:07:15 PM [express] 📁 Working directory: /app
+10:07:15 PM [express] 🏠 Platform: linux, Arch: x64
+10:07:15 PM [express] 📦 Node version: v18.20.5
+10:07:15 PM [express] ✅ Server successfully started on port 8080
+10:07:15 PM [express] 🔗 Health check available at: http://0.0.0.0:8080/api/health
+🏥 Health check requested: {
+  status: 'ok',
+  timestamp: '2025-09-24T22:07:16.177Z',
+  uptime: 1.812215067,
+  environment: 'production',
+  port: '8080',
+  pid: 1,
+  memory: {
+    rss: 125464576,
+    heapTotal: 53972992,
+    heapUsed: 41600744,
+    external: 3915964,
+    arrayBuffers: 235850
+  },
+  platform: 'linux'
+}
+⚠️ No ADMIN_TOKEN configured - allowing unrestricted access
+🚀 Starting live trading engine via API...
+🎯 Starting trading engine with settings: {
+  exchange: 'binance',
+  symbols: 'BTC/USDT,ETH/USDT,SOL/USDT,ASTR/USDT,PEPE/USDT,DOGE/USDT,SHIB/USDT,WIF/USDT',
+  riskPerTrade: 0.015,
+  dryRun: true
+}
+📊 Starting trading loop for BTC/USDT
+📊 Starting trading loop for ETH/USDT
+📊 Starting trading loop for SOL/USDT
+📊 Starting trading loop for ASTR/USDT
+📊 Starting trading loop for PEPE/USDT
+📊 Starting trading loop for DOGE/USDT
+📊 Starting trading loop for SHIB/USDT
+📊 Starting trading loop for WIF/USDT
+✅ Trading engine started for 8 symbols
+📅 Daily equity reset: 10000
+🟢 ENTERED LONG DOGE/USDT @ $0.2343 | Stop: $0.2340 | Vol Z-Score: 3.94 | HHV: $0.2343
+🟢 ENTERED LONG ETH/USDT @ $4029.1200 | Stop: $4024.8325 | Vol Z-Score: 2.79 | HHV: $4028.6900
+❌ Error processing DOGE/USDT: Error: Position with id [object Object] not found
+    at MemStorage.updatePosition (file:///app/dist/production.js:188:13)
+    at TradingEngine.updateTrailingStop (file:///app/dist/production.js:493:21)
+    at TradingEngine.processSymbol (file:///app/dist/production.js:315:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Timeout._onTimeout (file:///app/dist/production.js:289:9)
+🔴 CLOSED ETH/USDT @ $4023.9300 | PnL: $-181.57 (-0.13%) | Reason: Stop loss triggered
+🔴 CLOSED DOGE/USDT @ $0.2339 | PnL: $-213.64 (-0.20%) | Reason: Stop loss triggered
