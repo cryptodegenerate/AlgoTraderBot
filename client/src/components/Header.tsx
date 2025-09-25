@@ -14,7 +14,10 @@ export function Header() {
     tradeStats,
     setIsSettingsModalOpen 
   } = useAppStore();
-  const { isConnected } = useWebSocket();
+  const { isConnected: wsConnected } = useWebSocket();
+  
+  // Use actual bot status instead of WebSocket connection
+  const isBotRunning = botStatus?.isRunning || false;
   const { toast } = useToast();
 
   const handleBotControl = async (action: 'start' | 'pause' | 'kill') => {
@@ -48,16 +51,16 @@ export function Header() {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <span 
-              className={`status-dot ${isConnected ? 'status-online' : 'status-offline'}`}
+              className={`status-dot ${isBotRunning ? 'status-online' : 'status-offline'}`}
               data-testid="connection-status"
             />
             <span className="text-sm text-muted-foreground">
-              {isConnected ? 'Bot Online' : 'Bot Offline'}
+              {isBotRunning ? 'Bot Running' : 'Bot Stopped'}
             </span>
           </div>
           <div className="text-sm text-muted-foreground">
             Exchange: <span className="text-foreground font-medium" data-testid="exchange-name">
-              {botSettings?.exchange || 'Bybit'}
+              {botSettings?.exchange || 'Binance'}
             </span>
           </div>
         </div>
