@@ -22,17 +22,15 @@ export class TradingEngine {
   private lastDailyReset = new Date().getUTCDate();
 
   constructor() {
-    // Initialize Binance connection
-    this.exchange = new ccxt.binance({
-      apiKey: process.env.BINANCE_API_KEY,
-      secret: process.env.BINANCE_SECRET_KEY,
+    // Initialize OKX connection (no auth needed for public data)
+    this.exchange = new ccxt.okx({
       enableRateLimit: true,
     });
     
-    // Properly enable testnet mode
-    this.exchange.setSandboxMode(true);
+    // Using OKX public endpoints (no authentication required for market data)
+    // Safe because we're in dry-run mode (no actual orders, just data feeds)
     
-    console.log('🚀 Trading Engine initialized with Binance testnet (sandbox mode)');
+    console.log('🚀 Trading Engine initialized with OKX public API (market data only - dry run mode)');
   }
 
   async start(): Promise<void> {
