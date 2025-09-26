@@ -8,7 +8,11 @@ export function RiskDashboard() {
 
   const dailyDrawdown = Math.min(tradeStats.maxDrawdown, botSettings?.dailyMaxDD || 5) / (botSettings?.dailyMaxDD || 5) * 100;
   const positionUtilization = positions.length / (botSettings?.maxConcurrentPos || 2) * 100;
-  const availableCapital = currentEquity * 0.9; // Mock calculation
+  // Calculate actual available capital based on open positions
+  const capitalAtRisk = positions.reduce((total, position) => {
+    return total + Math.abs(position.qty * position.entry);
+  }, 0);
+  const availableCapital = currentEquity - capitalAtRisk;
 
   return (
     <Card>
