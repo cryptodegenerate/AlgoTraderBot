@@ -20,6 +20,14 @@ export class TradingEngine {
   private equity = 10000; // Starting test equity
   private dailyStartEquity = 10000;
   private lastDailyReset = new Date().getUTCDate();
+  
+  // BTC health filter caching and circuit breaker
+  private btcHealthCache: { healthy: boolean; lastUpdate: number; errorCount: number } = {
+    healthy: false, // Default to NOT healthy (safer)
+    lastUpdate: 0,
+    errorCount: 0
+  };
+  private btcHealthInterval?: NodeJS.Timeout;
 
   constructor() {
     // Initialize OKX connection (no auth needed for public data)
@@ -58,6 +66,9 @@ export class TradingEngine {
       // Update bot status
       await this.updateBotStatus(true);
 
+      // Start BTC health monitoring (separate from trading loops)
+      this.startBTCHealthMonitoring();
+
       // Start trading loops for each symbol
       const symbols = this.getSymbolsList();
       for (const symbol of symbols) {
@@ -88,6 +99,12 @@ export class TradingEngine {
       console.log(`⏹️ Stopped trading loop for ${symbol}`);
     });
     this.intervals.clear();
+
+    // Stop BTC health monitoring
+    if (this.btcHealthInterval) {
+      clearInterval(this.btcHealthInterval);
+      console.log('⏹️ Stopped BTC health monitoring');
+    }
 
     // Close all positions in dry-run mode
     for (const [symbol, position] of this.positions.entries()) {
@@ -147,7 +164,7 @@ export class TradingEngine {
       if (currentPosition) {
         const shouldExit = this.shouldExitPosition(currentPosition, currentPrice);
         if (shouldExit.exit) {
-          await this.closePosition(symbol, shouldExit.reason);
+          await this.closePosition(symbol, shouldExit.reason, shouldExit.exitPrice);
         } else {
           // Update trailing stop
           await this.updateTrailingStop(currentPosition, currentPrice, signal.atr);
@@ -159,10 +176,10 @@ export class TradingEngine {
     }
   }
 
-  private async fetchOHLCV(symbol: string, limit = 200): Promise<OHLCV[]> {
+  private async fetchOHLCV(symbol: string, limit = 200, timeframe?: string): Promise<OHLCV[]> {
     try {
-      const timeframe = this.settings?.timeframe || '1m';
-      const ohlcv = await this.exchange.fetchOHLCV(symbol, timeframe, undefined, limit);
+      const tf = timeframe || this.settings?.timeframe || '5m'; // Default to 5m for more stable signals
+      const ohlcv = await this.exchange.fetchOHLCV(symbol, tf, undefined, limit);
       
       return ohlcv.map((candle: any[]) => ({
         timestamp: candle[0] || 0,
@@ -182,7 +199,7 @@ export class TradingEngine {
     const settings = this.settings!;
     const hhvLen = settings.hhvLen || 35;
     const atrLen = settings.atrLen || 12;
-    const volZMin = settings.volZMin || 2.0; // Increased from 1.5 to 2.0 for better quality signals
+    const volZMin = settings.volZMin || 2.5; // Increased for better quality signals
     const lookback = Math.min(settings.lookback || 150, 60);
 
     if (ohlcvData.length < Math.max(hhvLen, atrLen, lookback)) {
@@ -190,26 +207,57 @@ export class TradingEngine {
     }
 
     const current = ohlcvData[ohlcvData.length - 1];
+    const previous = ohlcvData[ohlcvData.length - 2];
     const recent = ohlcvData.slice(-hhvLen);
     
     // Calculate highest high over lookback period
     const hhv = Math.max(...recent.slice(0, -1).map(d => d.high));
     
-    // Calculate ATR
+    // Calculate ATR for volatility context
     const atr = this.calculateATR(ohlcvData.slice(-atrLen - 1), atrLen);
     
-    // Calculate volume Z-score
-    const volumeZ = this.calculateVolumeZScore(ohlcvData.slice(-lookback), lookback);
+    // Enhanced volume analysis: 5m and 15m RVOL
+    const volumeZ5m = this.calculateVolumeZScore(ohlcvData.slice(-lookback), lookback);
     
     // BTC health filter: only trade longs when BTC is healthy
     const btcHealthy = await this.checkBTCHealth();
     
-    // Breakout condition: close > recent high AND volume spike AND BTC healthy
-    const shouldEnter = current.close > hhv && volumeZ > volZMin && btcHealthy;
+    // IMPROVED ENTRY CONDITIONS:
+    // 1. Breakout buffer: close must be above HHV + 0.1% buffer (reduces false breaks)
+    const breakoutBuffer = hhv * 0.001; // 0.1% buffer
+    const priceBreakout = current.close > (hhv + breakoutBuffer);
     
-    // Calculate stop loss (OPTIMIZED: wider stops for crypto volatility)
-    const atrMultSL = settings.atrMultSL || 2.5; // Increased from 1.5 to 2.5
-    const minDist = current.close * 0.0125; // Minimum 1.25% distance from price
+    // 2. Range expansion: current bar's true range >= 1.3x ATR (momentum confirmation)  
+    const currentTR = Math.max(
+      current.high - current.low,
+      Math.abs(current.high - previous.close),
+      Math.abs(current.low - previous.close)
+    );
+    const rangeExpansion = currentTR >= (atr * 1.3);
+    
+    // 3. Volume confirmation: strong volume spike on 5m
+    const volumeConfirm = volumeZ5m >= volZMin;
+    
+    // 4. Price action: close in upper 70% of the range (strength)
+    const rangePosition = (current.close - current.low) / (current.high - current.low);
+    const strongClose = rangePosition >= 0.7;
+    
+    // 5. Multi-bar confirmation: previous bar also showed strength
+    const prevRangePos = previous.high > previous.low ? 
+      (previous.close - previous.low) / (previous.high - previous.low) : 0;
+    const momentumContinuation = prevRangePos >= 0.6; // Previous bar also closed strong
+    
+    // COMBINED ENTRY SIGNAL (all conditions must be met)
+    const shouldEnter = priceBreakout && 
+                       rangeExpansion && 
+                       volumeConfirm && 
+                       strongClose && 
+                       momentumContinuation &&
+                       btcHealthy;
+    
+    // Calculate stop loss (WIDER: 3.0x ATR for crypto volatility)
+    const atrMultSL = settings.atrMultSL || 3.0; // Increased from 2.5 to 3.0
+    const minDist = current.close * 0.025; // Minimum 2.5% distance from price
     const atrDistance = atrMultSL * atr;
     const stopDistance = Math.max(atrDistance, minDist); // Use larger of ATR or minimum %
     const stopLoss = current.close - stopDistance;
@@ -218,8 +266,13 @@ export class TradingEngine {
       shouldEnter,
       atr,
       stopLoss,
-      volumeZ,
-      hhv
+      volumeZ: volumeZ5m,
+      hhv,
+      // Additional signal quality metrics for logging
+      breakoutBuffer,
+      rangeExpansion,
+      strongClose,
+      momentumContinuation
     };
   }
 
@@ -259,21 +312,78 @@ export class TradingEngine {
     return std > 0 ? (currentVolume - mean) / std : 0;
   }
 
-  private async checkBTCHealth(): Promise<boolean> {
+  private startBTCHealthMonitoring(): void {
+    // Update BTC health every 60 seconds (independent of trading loops)
+    this.btcHealthInterval = setInterval(async () => {
+      try {
+        await this.updateBTCHealth();
+      } catch (error) {
+        console.error('❌ BTC health monitor error:', error);
+      }
+    }, 60000); // 1 minute intervals
+
+    // Initial health check
+    this.updateBTCHealth();
+  }
+
+  private async updateBTCHealth(): Promise<void> {
+    const now = Date.now();
+    
+    // Circuit breaker: if too many recent errors, skip and stay unhealthy
+    if (this.btcHealthCache.errorCount >= 5) {
+      const cooloffPeriod = 5 * 60 * 1000; // 5 minutes
+      if (now - this.btcHealthCache.lastUpdate < cooloffPeriod) {
+        console.log('⚠️ BTC health check in cooloff period due to errors');
+        return;
+      }
+      // Reset error count after cooloff
+      this.btcHealthCache.errorCount = 0;
+    }
+
     try {
-      // Get BTC 15m data for trend health check
-      const btcData = await this.fetchOHLCV('BTC/USDT', 50);
-      if (btcData.length < 20) return true; // Default to healthy if insufficient data
+      // Get BTC 15m data for trend health check (more stable than 1m)
+      const btcData = await this.fetchOHLCV('BTC/USDT', 50, '15m'); // Use unified symbol format with 15m timeframe
+      if (btcData.length < 20) {
+        console.log('⚠️ Insufficient BTC data for health check');
+        this.btcHealthCache.healthy = false;
+        return;
+      }
       
       const current = btcData[btcData.length - 1];
       const ema20 = this.calculateEMA(btcData.slice(-20), 20);
+      const ema50 = this.calculateEMA(btcData.slice(-50), 50);
       
-      // BTC healthy if current price > 20 EMA (uptrend)
-      return current.close > ema20;
+      // BTC healthy if: price > EMA20 AND EMA20 > EMA50 (strong uptrend)
+      const healthy = current.close > ema20 && ema20 > ema50;
+      
+      this.btcHealthCache = {
+        healthy,
+        lastUpdate: now,
+        errorCount: 0 // Reset on success
+      };
+      
+      console.log(`📊 BTC Health: ${healthy ? 'HEALTHY' : 'UNHEALTHY'} | Price: $${current.close.toFixed(2)} | EMA20: $${ema20.toFixed(2)} | EMA50: $${ema50.toFixed(2)}`);
+      
     } catch (error) {
       console.error('❌ BTC health check failed:', error);
-      return true; // Default to healthy on error to avoid blocking all trades
+      this.btcHealthCache.errorCount++;
+      this.btcHealthCache.healthy = false; // Default to NOT healthy on error (safer)
+      this.btcHealthCache.lastUpdate = now;
     }
+  }
+
+  private async checkBTCHealth(): Promise<boolean> {
+    const now = Date.now();
+    const cacheAge = now - this.btcHealthCache.lastUpdate;
+    
+    // Cache valid for 2 minutes
+    if (cacheAge < 2 * 60 * 1000) {
+      return this.btcHealthCache.healthy;
+    }
+    
+    // Trigger immediate update if cache is stale
+    await this.updateBTCHealth();
+    return this.btcHealthCache.healthy;
   }
 
   private calculateEMA(ohlcvData: OHLCV[], period: number): number {
@@ -301,7 +411,7 @@ export class TradingEngine {
         return;
       }
       
-      const riskAmount = this.equity * (this.settings.riskPerTrade || 0.01); // Reduced from 1.5% to 1.0%
+      const riskAmount = this.equity * (this.settings.riskPerTrade || 0.0075); // Reduced to 0.75% for better risk management
       const qty = riskAmount / stopDistance;
       
       // Guard against excessive position size
@@ -345,6 +455,7 @@ export class TradingEngine {
       await storage.createTrade(tradeData);
 
       console.log(`🟢 ENTERED LONG ${symbol} @ $${price.toFixed(4)} | Stop: $${signal.stopLoss.toFixed(4)} | Vol Z-Score: ${signal.volumeZ.toFixed(2)} | HHV: $${signal.hhv.toFixed(4)}`);
+      console.log(`📊 Signal Quality: Range Exp: ${signal.rangeExpansion ? '✅' : '❌'} | Strong Close: ${signal.strongClose ? '✅' : '❌'} | Momentum: ${signal.momentumContinuation ? '✅' : '❌'}`);
       
       // Send Telegram notification if configured
       await this.sendTelegramAlert(`🟢 LONG ${symbol}\nEntry: $${price.toFixed(4)}\nStop Loss: $${signal.stopLoss.toFixed(4)}\nVolume Breakout: ${signal.volumeZ.toFixed(2)}x\nRisk: ${((this.settings.riskPerTrade || 0.01) * 100).toFixed(1)}%`);
@@ -354,24 +465,31 @@ export class TradingEngine {
     }
   }
 
-  private shouldExitPosition(position: Position, currentPrice: number): { exit: boolean; reason: string } {
+  private shouldExitPosition(position: Position, currentPrice: number): { exit: boolean; reason: string; exitPrice?: number } {
     // Stop loss hit
     if (position.sl && currentPrice <= position.sl) {
-      return { exit: true, reason: 'Stop loss triggered' };
+      return { exit: true, reason: 'Stop loss triggered', exitPrice: position.sl };
     }
 
-    // Could add additional exit conditions here
+    // Could add additional exit conditions here (profit targets, etc.)
     return { exit: false, reason: '' };
   }
 
-  private async closePosition(symbol: string, reason: string): Promise<void> {
+  private async closePosition(symbol: string, reason: string, specifiedExitPrice?: number): Promise<void> {
     const position = this.positions.get(symbol);
     if (!position) return;
 
     try {
-      // Get current price for exit
-      const ohlcvData = await this.fetchOHLCV(symbol, 1);
-      const exitPrice = ohlcvData[0]?.close || position.currentPrice || position.entry;
+      let exitPrice: number;
+      
+      if (specifiedExitPrice) {
+        // Use specified exit price (e.g., stop loss price)
+        exitPrice = specifiedExitPrice;
+      } else {
+        // Get current market price for exit (e.g., manual close)
+        const ohlcvData = await this.fetchOHLCV(symbol, 1);
+        exitPrice = ohlcvData[0]?.close || position.currentPrice || position.entry;
+      }
 
       // Calculate PnL
       const pnl = (exitPrice - position.entry) * position.qty;
@@ -477,7 +595,7 @@ export class TradingEngine {
         lastUpdate: Date.now(),
         exchange: this.settings?.exchange || 'binance',
         symbols: this.settings?.symbols || '',
-        timeframe: this.settings?.timeframe || '1m',
+        timeframe: this.settings?.timeframe || '5m',
         dryRun: this.settings?.dryRun ?? true
       };
 

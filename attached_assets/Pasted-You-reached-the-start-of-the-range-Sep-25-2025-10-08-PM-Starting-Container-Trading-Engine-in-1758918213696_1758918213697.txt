@@ -1,0 +1,89 @@
+You reached the start of the range
+Sep 25, 2025, 10:08 PM
+Starting Container
+🚀 Trading Engine initialized with OKX public API (market data only - dry run mode)
+9:10:45 PM [express] 🌟 Initializing Goose Alpha Trading Bot...
+9:10:45 PM [express] 🔗 Registering API routes...
+🔗 Registering API routes...
+🌐 Creating HTTP server...
+✅ Server setup complete, returning HTTP server
+9:10:45 PM [express] ✅ Routes registered successfully
+9:10:45 PM [express] 📁 Setting up production static file serving...
+9:10:45 PM [express] ✅ Static files served from: /app/dist/public
+9:10:45 PM [express] 🚀 Starting Goose Alpha Bot...
+9:10:45 PM [express] 🔧 Environment: PORT=8080, NODE_ENV=production
+9:10:45 PM [express] 📁 Working directory: /app
+9:10:45 PM [express] 🏠 Platform: linux, Arch: x64
+9:10:45 PM [express] 📦 Node version: v18.20.5
+9:10:45 PM [express] ✅ Server successfully started on port 8080
+9:10:45 PM [express] 🔗 Health check available at: http://0.0.0.0:8080/api/health
+🏥 Health check requested: {
+  status: 'ok',
+  timestamp: '2025-09-25T21:10:45.629Z',
+  uptime: 1.411439479,
+  environment: 'production',
+  port: '8080',
+  pid: 1,
+  memory: {
+    rss: 122777600,
+    heapTotal: 52719616,
+    heapUsed: 41294992,
+    external: 3446031,
+    arrayBuffers: 235850
+  },
+  platform: 'linux'
+}
+⚠️ No ADMIN_TOKEN configured - allowing unrestricted access
+🚀 Starting live trading engine via API...
+🎯 Starting trading engine with settings: {
+  exchange: 'binance',
+  symbols: 'BTC/USDT,ETH/USDT,SOL/USDT,ASTR/USDT,PEPE/USDT,DOGE/USDT,SHIB/USDT,WIF/USDT',
+  riskPerTrade: 0.015,
+  dryRun: true
+}
+📊 Starting trading loop for BTC/USDT
+📊 Starting trading loop for ETH/USDT
+📊 Starting trading loop for SOL/USDT
+📊 Starting trading loop for ASTR/USDT
+📊 Starting trading loop for PEPE/USDT
+📊 Starting trading loop for DOGE/USDT
+📊 Starting trading loop for SHIB/USDT
+📊 Starting trading loop for WIF/USDT
+✅ Trading engine started for 8 symbols
+⚠️ No ADMIN_TOKEN configured - allowing unrestricted access
+⚠️ No ADMIN_TOKEN configured - allowing unrestricted access
+🟢 ENTERED LONG ASTR/USDT @ $0.0215 | Stop: $0.0212 | Vol Z-Score: 1.58 | HHV: $0.0214
+🟢 ENTERED LONG ETH/USDT @ $3929.4500 | Stop: $3880.3319 | Vol Z-Score: 2.55 | HHV: $3927.5300
+🔴 CLOSED ETH/USDT @ $3878.5500 | PnL: $-155.44 (-1.30%) | Reason: Stop loss triggered
+🔴 CLOSED ASTR/USDT @ $0.0212 | PnL: $-156.42 (-1.30%) | Reason: Stop loss triggered
+📅 Daily equity reset: 9688.133817752512
+🟢 ENTERED LONG SHIB/USDT @ $0.0000 | Stop: $0.0000 | Vol Z-Score: 2.36 | HHV: $0.0000
+🟢 ENTERED LONG ETH/USDT @ $3907.9100 | Stop: $3859.0611 | Vol Z-Score: 1.73 | HHV: $3899.3300
+🟢 CLOSED ETH/USDT @ $3947.2000 | PnL: $116.89 (1.01%) | Reason: Stop loss triggered
+🟢 ENTERED LONG WIF/USDT @ $0.7420 | Stop: $0.7327 | Vol Z-Score: 9.14 | HHV: $0.7419
+🔴 CLOSED WIF/USDT @ $0.7318 | PnL: $-161.74 (-1.37%) | Reason: Stop loss triggered
+🟢 ENTERED LONG DOGE/USDT @ $0.2271 | Stop: $0.2242 | Vol Z-Score: 2.15 | HHV: $0.2270
+❌ Failed to fetch OHLCV for BTC/USDT: RequestTimeout: okx GET https://www.okx.com/api/v5/market/candles?instId=BTC-USDT&bar=1m&limit=50 request timed out (10000 ms)
+    at okx.fetch (file:///app/node_modules/ccxt/js/src/base/Exchange.js:702:23)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at runNextTicks (node:internal/process/task_queues:64:3)
+    at process.processTimers (node:internal/timers:509:9)
+    at async okx.fetch2 (file:///app/node_modules/ccxt/js/src/base/Exchange.js:4499:24)
+    at async okx.request (file:///app/node_modules/ccxt/js/src/base/Exchange.js:4523:16)
+    at async okx.fetchOHLCV (file:///app/node_modules/ccxt/js/src/okx.js:2510:28)
+    at async TradingEngine.fetchOHLCV (file:///app/dist/production.js:322:21)
+    at async TradingEngine.checkBTCHealth (file:///app/dist/production.js:393:23)
+    at async TradingEngine.calculateBreakoutSignal (file:///app/dist/production.js:350:24)
+❌ Failed to fetch OHLCV for BTC/USDT: RequestTimeout: okx GET https://www.okx.com/api/v5/market/candles?instId=BTC-USDT&bar=1m&limit=50 request timed out (10000 ms)
+    at process.processTimers (node:internal/timers:509:9)
+    at okx.fetch (file:///app/node_modules/ccxt/js/src/base/Exchange.js:702:23)
+    at async okx.fetch2 (file:///app/node_modules/ccxt/js/src/base/Exchange.js:4499:24)
+    at async okx.request (file:///app/node_modules/ccxt/js/src/base/Exchange.js:4523:16)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async okx.fetchOHLCV (file:///app/node_modules/ccxt/js/src/okx.js:2510:28)
+    at runNextTicks (node:internal/process/task_queues:64:3)
+    at async TradingEngine.fetchOHLCV (file:///app/dist/production.js:322:21)
+    at async TradingEngine.checkBTCHealth (file:///app/dist/production.js:393:23)
+    at async TradingEngine.calculateBreakoutSignal (file:///app/dist/production.js:350:24)
+🔴 CLOSED DOGE/USDT @ $0.2242 | PnL: $-146.26 (-1.26%) | Reason: Stop loss triggered
+🔴 CLOSED SHIB/USDT @ $0.0000 | PnL: $-145.63 (-1.25%) | Reason: Stop loss triggered
